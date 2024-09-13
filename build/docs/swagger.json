@@ -154,7 +154,7 @@
 		"securitySchemes": {}
 	},
 	"info": {
-		"title": "yarn-structure",
+		"title": "product-service",
 		"version": "1.0.0",
 		"license": {
 			"name": "MIT"
@@ -162,7 +162,7 @@
 		"contact": {}
 	},
 	"paths": {
-		"/v1/products": {
+		"/sv1/products": {
 			"get": {
 				"operationId": "GetAllProducts",
 				"responses": {
@@ -246,7 +246,7 @@
 				}
 			}
 		},
-		"/v1/products/{id}": {
+		"/sv1/products/{id}": {
 			"get": {
 				"operationId": "GetItemById",
 				"responses": {

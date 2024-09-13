@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import path from "path";
 import Joi from "joi";
 
+
 type Config = {
   env: string;
   port: number;

@@ -6,7 +6,7 @@ import validateRequest from '../middlewares/validate-input';
 import { ProductPaginatedResponse, ProductResponse } from '../controllers/types/product-response.type';
 import { productCreateSchema } from './schema/productCreateSchema';
 
-@Route('v1/products')
+@Route('sv1/products')
 export class ProductController extends Controller {
 	// Add this: the request might look like: /v1/products?page=1&limit=5&filter={"price":{"min": 2, "max":5}}&sort={"name": "desc"}
   @Get()

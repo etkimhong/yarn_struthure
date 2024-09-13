@@ -5,12 +5,13 @@
   "license": "MIT",
   "scripts": {
     "tsoa:gen": "tsoa spec && tsoa routes",
-    "dev": "yarn tsoa:gen && nodemon src/server.ts",
+    "dev": "tsoa:gen && nodemon src/server.ts",
     "build": "node build-script.js",
-    "start:local": "pm2 start ecosystem.config.local.js",
+    "start:local": "pm2 restart ecosystem.config.local.js || pm2 start ecosystem.config.local.js",
     "start": "pm2 start ecosystem.config.js",
     "restart": "pm2 reload ecosystem.config.js",
-    "db:insert": "ts-node src/database/scripts/insert-data.ts"
+    "db:insert": "ts-node src/database/scripts/insert-data.ts",
+    "start:dev": "node ./build/server.js"
   },
   "dependencies": {
     "dotenv": "^16.4.5",

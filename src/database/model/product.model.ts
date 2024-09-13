@@ -1,4 +1,4 @@
-import { Schema, model } from 'mongoose';
+import { Schema, model } from "mongoose";
 
 // Interface to describe a single document
 export interface IItem {
@@ -11,10 +11,10 @@ export interface IItem {
 const itemSchema = new Schema({
   name: { type: String, require: true },
   category: { type: String, require: true },
-  price: { type: Number, require: true }
-})
+  price: { type: Number, require: true },
+});
 
 // Create a model from the schema
-const ItemModel = model<IItem>('Item', itemSchema);
+const ItemModel = model<IItem>("Item", itemSchema);
 
 export default ItemModel;

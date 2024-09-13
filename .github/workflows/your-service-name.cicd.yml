@@ -1,5 +1,4 @@
 name: CI/CD Pipeline for Service
-
 on:
   pull_request:
     branches: [main] # Specify branches as needed

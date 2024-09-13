@@ -1,4 +1,5 @@
 name: CI/CD Pipeline for Service
+
 on:
   pull_request:
     branches: [main] # Specify branches as needed
@@ -8,114 +9,111 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest # Specifies that the job should run on the latest Ubuntu virtual environment provided by GitHub
-    defaults:
-      run:
-        working-directory: "." # Adjust this to the root directory of your Node.js project
-
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4 # This step checks out your repository under $GITHUB_WORKSPACE, so your workflow can access it
+        uses: actions/checkout@v4 # Checkout the code to the runner
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4 # This step sets up a Node.js environment with a specified version
+        uses: actions/setup-node@v4
         with:
-          node-version: "20" # Specify the Node.js version you require, e.g., '14', '16'
+          node-version: '20' # Adjust the Node.js version as per your needs
 
       - name: Install dependencies
-        run: yarn install # Runs yarn install to install all dependencies defined in your package.json
+        run: yarn install
 
       - name: Run build
-        run: yarn build # Executes the build script defined in your package.json
+        run: yarn build
 
       - name: Archive build artifacts
-        uses: actions/upload-artifact@v4 # Archives build artifacts for use in later jobs or for deployment
+        uses: actions/upload-artifact@v4
         with:
-          name: build # Optionally change the name of the artifact
-          path: ./build # Adjust this to where your build outputs artifacts, e.g., './build'
-deploy:      
-  runs-on: ubuntu-latest # Specifies that the job should run on the latest Ubuntu virtual environment provided by GitHub
-  needs: build # Specifies that this job needs the 'build' job to complete successfully before it starts
-  if: github.ref == 'refs/heads/main' # This job runs only if the push or PR merge is to the 'main' branch
+          name: build
+          path: ./build
 
-  steps:
-    - name: Download build artifacts
-      uses: actions/download-artifact@v4 # Downloads artifacts from the build job
-      with:
-        name: build # The name of the artifact to download
-        path: ./build # The path to store the downloaded artifact
+  deploy:
+    runs-on: ubuntu-latest # Specifies that the job should run on the latest Ubuntu virtual environment provided by GitHub
+    needs: build # Specifies that this job needs the 'build' job to complete successfully before it starts
+    if: github.ref == 'refs/heads/main' # This job runs only if the push or PR merge is to the 'main' branch
 
-    - name: Prepare Deployment Directories
-      uses: appleboy/ssh-action@master # SSH into the server to prepare directories
-      with:
-        host: ${{ secrets.SERVER_IP }} # Server IP address from secrets
-        username: ${{ secrets.SERVER_USERNAME }} # Server username from secrets
-        key: ${{ secrets.SSH_PRIVATE_KEY }} # SSH private key from secrets
-        port: 22 # SSH port, usually 22
-        script: |
-          mkdir -p /home/ec2-user/apps/build  # Adjust based on your server structure
-          mkdir -p /home/ec2-user/apps/build/configs  # For additional configuration files
+    steps:
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4 # Downloads artifacts from the build job
+        with:
+          name: build # The name of the artifact to download
+          path: ./build # The path to store the downloaded artifact
 
-    - name: Copy files to Server
-      uses: appleboy/scp-action@master # Copies files to the server using SCP
-      with:
-        host: ${{ secrets.SERVER_IP }}
-        username: ${{ secrets.SERVER_USERNAME }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        port: 22
-        source: "./build/*"
-        target: "/home/ec2-user/apps/build"
-        strip_components: 1 # Adjust based on the directory depth of the source
+      - name: Prepare Deployment Directories
+        uses: appleboy/ssh-action@master # SSH into the server to prepare directories
+        with:
+          host: ${{ secrets.SERVER_IP }} # Server IP address from secrets
+          username: ${{ secrets.SERVER_USERNAME }} # Server username from secrets
+          key: ${{ secrets.SSH_PRIVATE_KEY }} # SSH private key from secrets
+          port: 22 # SSH port, usually 22
+          script: |
+            mkdir -p /home/ec2-user/apps/build  # Adjust based on your server structure
+            mkdir -p /home/ec2-user/apps/build/configs  # For additional configuration files
 
-    - name: Create .env File
-      uses: appleboy/ssh-action@master # Creates an environment variable file on the server
-      with:
-        host: ${{ secrets.SERVER_IP }}
-        username: ${{ secrets.SERVER_USERNAME }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        port: 22
-        script: |
-          echo "NODE_ENV=production" > /home/ec2-user/apps/build/configs/.env.production
-          echo "PORT=${{ secrets.PORT }}" >> /home/ec2-user/apps/build/configs/.env.production
-          echo "MONGODB_URL=${{ secrets.MONGODB_URL}}" >> /home/ec2-user/apps/build/configs/.env.production
+      - name: Copy files to Server
+        uses: appleboy/scp-action@master # Copies files to the server using SCP
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          source: "./build/*"
+          target: "/home/ec2-user/apps/build"
+          strip_components: 1 # Adjust based on the directory depth of the source
 
-    - name: Install Dependencies and Restart Application
-      uses: appleboy/ssh-action@master # Installs dependencies and restarts the application using a process manager
-      with:
-        host: ${{ secrets.SERVER_IP }}
-        username: ${{ secrets.SERVER_USERNAME }}
-        key: ${{ secrets.SSH_PRIVATE_KEY }}
-        port: 22
-        script: |
-          # Ensure NVM and Node.js are installed
-          if [ ! -d "/home/ec2-user/.nvm" ]; then
-            echo "NVM is not installed. Installing NVM..."
-            curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
-            export NVM_DIR="$HOME/.nvm"
-            [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
-          else
-            echo "NVM is already installed."
-            source /home/ec2-user/.nvm/nvm.sh
-          fi
+      - name: Create .env File
+        uses: appleboy/ssh-action@master # Creates an environment variable file on the server
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            echo "NODE_ENV=production" > /home/ec2-user/apps/build/configs/.env.production
+            echo "PORT=${{ secrets.PORT }}" >> /home/ec2-user/apps/build/configs/.env.production
+            echo "MONGODB_URL=${{ secrets.MONGODB_URL}}" >> /home/ec2-user/apps/build/configs/.env.production
 
-          # Use the required Node.js version
-          nvm install 20
-          nvm use 20
+      - name: Install Dependencies and Restart Application
+        uses: appleboy/ssh-action@master # Installs dependencies and restarts the application using a process manager
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          script: |
+            # Ensure NVM and Node.js are installed
+            if [ ! -d "/home/ec2-user/.nvm" ]; then
+              echo "NVM is not installed. Installing NVM..."
+              curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.1/install.sh | bash
+              export NVM_DIR="$HOME/.nvm"
+              [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # This loads nvm
+            else
+              echo "NVM is already installed."
+              source /home/ec2-user/.nvm/nvm.sh
+            fi
 
-          # Install dependencies
-          cd /home/ec2-user/apps/build
-          yarn install --production
+            # Use the required Node.js version
+            nvm install 20
+            nvm use 20
 
-          # Ensure PM2 is installed
-          if ! command -v pm2 &> /dev/null; then
-            echo "PM2 is not installed. Installing PM2..."
-            npm install -g pm2
-          fi
+            # Install dependencies
+            cd /home/ec2-user/apps/build
+            yarn install --production
 
-          # Restart or start the application using PM2
-          if pm2 show product-service > /dev/null; then
-            echo "Application is running. Restarting..."
-            pm2 restart product-service
-          else
-            echo "Application is not running. Starting..."
-            pm2 start yarn --name product-service -- start
-          fi
+            # Ensure PM2 is installed
+            if ! command -v pm2 &> /dev/null; then
+              echo "PM2 is not installed. Installing PM2..."
+              npm install -g pm2
+            fi
+
+            # Restart or start the application using PM2
+            if pm2 show product-service > /dev/null; then
+              echo "Application is running. Restarting..."
+              pm2 restart product-service
+            else
+              echo "Application is not running. Starting..."
+              pm2 start yarn --name product-service -- start
+            fi

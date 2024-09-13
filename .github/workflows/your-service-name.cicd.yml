@@ -79,6 +79,16 @@ jobs:
             echo "PORT=${{ secrets.PORT }}" >> /home/ubuntu/apps/build/configs/.env.production
             echo "MONGODB_URL=${{ secrets.MONGODB_URL}}" >> /home/ubuntu/apps/build/configs/.env.production
 
+      - name: Prepare Deployment Environment
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          source: ./scripts/setup-environment.sh  # Upload your setup script to the server
+          target: /home/ec2-user/scripts/          # Specify the target directory on the server
+
       - name: Install Dependencies and Restart Application
         uses: appleboy/ssh-action@master
         with:
@@ -87,6 +97,9 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           script: |
+            # Ensure the apps directory exists
+            mkdir -p /home/ec2-user/apps/build
+
             # Run setup-environment.sh to install NVM, Node.js, Yarn, and PM2
             bash /home/ec2-user/scripts/setup-environment.sh
 
@@ -102,3 +115,4 @@ jobs:
               echo "Application is not running. Starting..."
               pm2 start yarn --name product-service -- start
             fi
+

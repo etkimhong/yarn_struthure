@@ -11,10 +11,8 @@ else
     export NVM_DIR="$HOME/.nvm"
     [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
 fi
-
 # Load NVM
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-
 # Install Node.js v20 if not already installed
 nvm install 20
 nvm use 20
@@ -34,7 +32,6 @@ if ! command -v pm2 &> /dev/null; then
 else
     echo "PM2 is already installed."
 fi
-
 # Display versions to verify installations
 echo "Node.js version: $(node -v)"
 echo "PM2 version: $(pm2 -v)"

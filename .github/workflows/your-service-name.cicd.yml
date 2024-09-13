@@ -53,7 +53,7 @@ jobs:
           host: ${{ secrets.SERVER_IP }} # Replace with Amazon Linux server IP
           username: ${{ secrets.SERVER_USERNAME }} # Amazon Linux username (e.g., ec2-user)
           key: ./scripts/ExpressAPI.pem # Using the SSH private key from your scripts folder
-          port: 3000
+          port: 22
           script: |
             # Run the setup-environment.sh script on the server
             bash /home/ec2-user/scripts/setup-environment.sh
@@ -65,7 +65,7 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USERNAME }}
           key: ./scripts/ExpressAPI.pem
-          port: 3000
+          port: 22
           script: |
             sudo mkdir -p /home/ec2-user/apps/build
             sudo mkdir -p /home/ec2-user/apps/build/configs
@@ -77,7 +77,7 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USERNAME }}
           key: ./scripts/ExpressAPI.pem
-          port: 3000
+          port: 22
           source: "./build/*"
           target: "/home/ec2-user/apps/build"  # Update the directory for Amazon Linux
 
@@ -88,7 +88,7 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USERNAME }}
           key: ./scripts/ExpressAPI.pem
-          port: 3000
+          port: 22
           script: |
             echo "NODE_ENV=production" > /home/ec2-user/apps/build/configs/.env.production
             echo "PORT=${{ secrets.PORT }}" >> /home/ec2-user/apps/build/configs/.env.production
@@ -101,7 +101,7 @@ jobs:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USERNAME }}
           key: ./scripts/ExpressAPI.pem
-          port: 3000
+          port: 22
           script: |
             # For Amazon Linux, use ec2-user and paths for NVM and yarn
             source /home/ec2-user/.nvm/nvm.sh

@@ -2,63 +2,63 @@ name: CI/CD Pipeline for Service
 
 on:
   pull_request:
-    branches: [main] # Specify branches as needed
+    branches: [main]
   push:
-    branches: [main] # Specify branches as needed
+    branches: [main]
 
 jobs:
   build:
-    runs-on: ubuntu-latest # Specifies that the job should run on the latest Ubuntu virtual environment provided by GitHub
+    runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: "." # Adjust this to the root directory of your Node.js project
+        working-directory: "."
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4 # This step checks out your repository under $GITHUB_WORKSPACE, so your workflow can access it
+        uses: actions/checkout@v4
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4 # This step sets up a Node.js environment with a specified version
+        uses: actions/setup-node@v4
         with:
-          node-version: "20" # Specify the Node.js version you require, e.g., '14', '16'
+          node-version: "20"
 
       - name: Install dependencies
-        run: yarn install # Runs yarn install to install all dependencies defined in your package.json
+        run: yarn install
 
       - name: Run build
-        run: yarn build # Executes the build script defined in your package.json
+        run: yarn build
 
       - name: Archive build artifacts
-        uses: actions/upload-artifact@v4 # Archives build artifacts for use in later jobs or for deployment
+        uses: actions/upload-artifact@v4
         with:
-          name: build # Optionally change the name of the artifact
-          path: ./build # Adjust this to where your build outputs artifacts, e.g., './build'
+          name: build
+          path: ./build
 
   deploy:
-    runs-on: ubuntu-latest # Specifies that the job should run on the latest Ubuntu virtual environment provided by GitHub
-    needs: build # Specifies that this job needs the 'build' job to complete successfully before it starts
-    if: github.ref == 'refs/heads/main' # This job runs only if the push or PR merge is to the 'main' branch
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main'
 
     steps:
       - name: Download build artifacts
-        uses: actions/download-artifact@v4 # Downloads artifacts from the build job
+        uses: actions/download-artifact@v4
         with:
-          name: build # The name of the artifact to download
-          path: ./build # The path to store the downloaded artifact
+          name: build
+          path: ./build
 
       - name: Prepare Deployment Directories
-        uses: appleboy/ssh-action@master # SSH into the server to prepare directories
+        uses: appleboy/ssh-action@master
         with:
-          host: ${{ secrets.SERVER_IP }} # Server IP address from secrets
-          username: ${{ secrets.SERVER_USERNAME }} # Server username from secrets
-          key: ${{ secrets.SSH_PRIVATE_KEY }} # SSH private key from secrets
-          port: 22 # SSH port, usually 22
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
           script: |
-            mkdir -p /home/ubuntu/apps/build  # Change to match your desired directory structure
-            mkdir -p /home/ubuntu/apps/build/configs  # For additional configuration files
+            mkdir -p /home/ubuntu/apps/build
+            mkdir -p /home/ubuntu/apps/build/configs
 
       - name: Copy files to Server
-        uses: appleboy/scp-action@master # Copies files to the server using SCP
+        uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USERNAME }}
@@ -66,10 +66,10 @@ jobs:
           port: 22
           source: "./build/*"
           target: "/home/ubuntu/apps/build"
-          strip_components: 1 # Adjust based on the directory depth of the source
+          strip_components: 1
 
       - name: Create .env File
-        uses: appleboy/ssh-action@master # Creates an environment variable file on the server
+        uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_IP }}
           username: ${{ secrets.SERVER_USERNAME }}
@@ -80,7 +80,7 @@ jobs:
             echo "PORT=${{ secrets.PORT }}" >> /home/ubuntu/apps/build/configs/.env.production
             echo "MONGODB_URL=${{ secrets.MONGODB_URL }}" >> /home/ubuntu/apps/build/configs/.env.production
 
-      - name: Install Yarn, PM2, and Deploy Application
+      - name: Install Yarn and PM2, and Deploy Application
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SERVER_IP }}
@@ -92,34 +92,38 @@ jobs:
             export NVM_DIR="$HOME/.nvm"
             [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh" # Load nvm
 
-            # Install Node.js and npm if not installed
-            if ! command -v npm &> /dev/null; then
-              echo "npm is not installed. Installing Node.js and npm..."
-              sudo apt-get update
-              sudo apt-get install -y nodejs npm
-            else
-              echo "npm is already installed."
+            # Ensure Node.js and npm are installed
+            if ! command -v node &> /dev/null; then
+              echo "Node.js is not installed. Installing Node.js..."
+              curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.4/install.sh | bash
+              export NVM_DIR="$HOME/.nvm"
+              [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+              nvm install node
             fi
 
-            # Install yarn if not installed
+            # Ensure Yarn is installed
             if ! command -v yarn &> /dev/null; then
-              echo "yarn is not installed. Installing yarn..."
-              curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
-              echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list
-              sudo apt-get update
-              sudo apt-get install -y yarn
-            else
-              echo "yarn is already installed."
+              echo "Yarn is not installed. Installing Yarn..."
+              npm install -g yarn
             fi
 
-            # Check if PM2 is installed, install if necessary
+            # Ensure PM2 is installed and in PATH
             if ! command -v pm2 &> /dev/null; then
               echo "PM2 is not installed. Installing PM2..."
-              npm install -g pm2
-            else
-              echo "PM2 is already installed."
+              yarn global add pm2
             fi
+
+            # Ensure PM2 is available in PATH
+            export PATH="$HOME/.yarn/bin:$PATH"
 
             cd /home/ubuntu/apps/build
             yarn install --production
-            pm2 restart product-service || pm2 start yarn --name product-service -- start
+
+            # Check if the PM2 process is running, if so restart, otherwise start
+            if pm2 show product-service > /dev/null; then
+              echo "Application is running. Restarting..."
+              pm2 restart product-service
+            else
+              echo "Application is not running. Starting..."
+              pm2 start yarn --name "product-service" -- start
+            fi

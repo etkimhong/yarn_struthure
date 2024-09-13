@@ -79,7 +79,7 @@ jobs:
             echo "PORT=${{ secrets.PORT }}" >> /home/ubuntu/apps/build/configs/.env.production
             echo "MONGODB_URL=${{ secrets.MONGODB_URL}}" >> /home/ubuntu/apps/build/configs/.env.production
 
-      name: CI/CD Pipeline for Service
+        name: CI/CD Pipeline for Service
 
 on:
   pull_request:

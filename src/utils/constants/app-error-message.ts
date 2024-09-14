@@ -8,7 +8,5 @@ export const APP_ERROR_MESSAGE = {
     invalidCredentials: "Invalid user email or password",
     invalidEmail: "Enter a valid email address",
     existedEmail: "Email already exists",
-    // Product Resource Message Error
     ProductDoesntExist: "Product does not exist"
-    // ...
   };

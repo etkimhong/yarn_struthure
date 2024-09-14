@@ -17,7 +17,6 @@ fi
 nvm install 20
 nvm use 20
 nvm alias default 20
-
 # Install Yarn and PM2 globally if they are not installed
 if ! command -v yarn &> /dev/null; then
     echo "Yarn is not installed. Installing Yarn..."

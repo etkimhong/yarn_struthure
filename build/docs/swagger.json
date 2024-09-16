@@ -162,7 +162,7 @@
 		"contact": {}
 	},
 	"paths": {
-		"/sv1/products": {
+		"/v1/products": {
 			"get": {
 				"operationId": "GetAllProducts",
 				"responses": {
@@ -246,7 +246,7 @@
 				}
 			}
 		},
-		"/sv1/products/{id}": {
+		"/v1/products/{id}": {
 			"get": {
 				"operationId": "GetItemById",
 				"responses": {

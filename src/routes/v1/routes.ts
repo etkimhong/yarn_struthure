@@ -87,7 +87,7 @@ export function RegisterRoutes(app: Router) {
 
 
     
-        app.get('/sv1/products',
+        app.get('/v1/products',
             ...(fetchMiddlewares<RequestHandler>(ProductController)),
             ...(fetchMiddlewares<RequestHandler>(ProductController.prototype.getAllProducts)),
 

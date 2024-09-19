@@ -1,0 +1,17 @@
+version: '3.8'
+services:
+   backend_sample:
+    container_name: backend_sample_container
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    restart: always
+    ports:
+      - 3000:3000
+    env_file: ./src/configs/.env.development
+    environment:
+      - DOCKER_ENV=true
+    volumes:
+      - ./src:/app/src # HOT RELOADING, ANY CHANGE IN SRC FOLDER OUR APP WILL RESTART 
+
+      #Using Docker volumes in this case allows you to avoid rebuilding the image every time you make changes to your code.

@@ -14,6 +14,6 @@ export const productCreateSchema: ObjectSchema = Joi.object({
     "number.base": "Price must be a number",
     "number.positive": "Price must be a positive number",
     "number.min": "Price must be at least 0.01",
-    "any.required": "Price is required",
+    "any.required": "Price is hello bro",
   }),
 }) as ObjectSchema; // Explicitly cast the schema
